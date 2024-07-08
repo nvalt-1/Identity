@@ -22,6 +22,13 @@ public class RegisterController : Controller
     [HttpPost]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
+        // Session must contain personSerial to register
+        var personSerial = HttpContext.Session.GetString("personSerial");
+        if (string.IsNullOrEmpty(personSerial))
+        {
+            return Unauthorized();
+        }
+
         if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
         {
             var errors = new List<IdentityError>();
