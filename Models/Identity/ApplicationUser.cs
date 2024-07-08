@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 
 namespace Identity.Models.Identity;
@@ -9,4 +10,5 @@ public class ApplicationUser : IdentityUser<string>
     public override string? NormalizedUserName { get; set; }
     public override string? PasswordHash { get; set; }
     public override string? SecurityStamp { get; set; }
+    public IList<Claim> Claims { get; set; } = [];
 }

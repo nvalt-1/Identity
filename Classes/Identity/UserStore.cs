@@ -1,13 +1,16 @@
 using System.Diagnostics;
+using System.Security.Claims;
 using Identity.Models.Identity;
 using Identity.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using NuGet.Packaging;
 
 namespace Identity.Classes.Identity;
 
 public class UserStore :
     IUserPasswordStore<ApplicationUser>,
-    IUserSecurityStampStore<ApplicationUser>
+    IUserSecurityStampStore<ApplicationUser>,
+    IUserClaimStore<ApplicationUser>
 {
     private readonly IIdentityService _identityService;
 
@@ -87,11 +90,6 @@ public class UserStore :
         return Task.FromResult(!string.IsNullOrEmpty(applicationUser.PasswordHash));
     }
 
-    public void Dispose()
-    {
-        _identityService.Dispose();
-    }
-
     public Task SetSecurityStampAsync(ApplicationUser user, string stamp, CancellationToken cancellationToken)
     {
         user.SecurityStamp = stamp;
@@ -101,5 +99,47 @@ public class UserStore :
     public Task<string?> GetSecurityStampAsync(ApplicationUser user, CancellationToken cancellationToken)
     {
         return Task.FromResult(user.SecurityStamp);
+    }
+
+    public void Dispose()
+    {
+        _identityService.Dispose();
+    }
+
+    public Task<IList<Claim>> GetClaimsAsync(ApplicationUser user, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(user.Claims);
+    }
+
+    public Task AddClaimsAsync(ApplicationUser user, IEnumerable<Claim> claims, CancellationToken cancellationToken)
+    {
+        user.Claims.AddRange(claims);
+        return Task.CompletedTask;
+    }
+
+    public Task ReplaceClaimAsync(ApplicationUser user, Claim claim, Claim newClaim, CancellationToken cancellationToken)
+    {
+        var index = user.Claims.IndexOf(claim);
+        if (index > 0)
+        {
+            user.Claims[index] = newClaim;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task RemoveClaimsAsync(ApplicationUser user, IEnumerable<Claim> claims, CancellationToken cancellationToken)
+    {
+        foreach (var claim in claims)
+        {
+            user.Claims.Remove(claim);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task<IList<ApplicationUser>> GetUsersForClaimAsync(Claim claim, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
     }
 }
