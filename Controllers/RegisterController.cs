@@ -1,5 +1,6 @@
 using Identity.Models.Identity;
 using Identity.Models.Requests;
+using Identity.Models.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -23,20 +24,42 @@ public class RegisterController : Controller
     {
         if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
         {
-            return BadRequest();
+            var errors = new List<IdentityError>();
+            if (string.IsNullOrEmpty(request.Username))
+            {
+                errors.Add(new IdentityError()
+                {
+                    Code = "InvalidUserName",
+                    Description = "Empty or missing username is invalid."
+                });
+            }
+
+            if (string.IsNullOrEmpty(request.Password))
+            {
+                errors.Add(new IdentityError()
+                {
+                    Code = "PasswordTooShort",
+                    Description = "Empty or missing password is invalid."
+                });
+            }
+
+            return BadRequest(new RegisterResponse()
+            {
+                Errors = errors
+            });
         }
 
         var user = new ApplicationUser { UserName = request.Username, };
         var result = await _userManager.CreateAsync(user, request.Password);
+
         if (result.Succeeded)
         {
-            return Ok($"Registered {request.Username}");
+            return Ok();
         }
 
-        #if DEBUG
-        return BadRequest(result.Errors);
-        #else
-        return BadRequest();
-        #endif
+        return UnprocessableEntity(new RegisterResponse()
+        {
+            Errors = result.Errors.ToList()
+        });
     }
 }
